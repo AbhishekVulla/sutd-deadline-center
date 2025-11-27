@@ -1,0 +1,43 @@
+{
+  "activity": {
+    "container": "body",
+    "items": "li.stream-item-container",
+    "courseLink": ".element-details .context a",
+    "titleLink": ".element-details .name .js-title-link",
+    "dueWrap": ".element-details .content .due-date",
+    "dueDateBdi": ".element-details .content .due-date bdi"
+  },
+  "assignments": {
+    "container": "#assignment-list, .assignments-list, [class*='assignment']",
+    "items": ".assignment-item, .assignment-row, tr, [class*='assignment-entry']",
+    "title": ".assignment-title, .title, h3, td:first-child",
+    "date": ".due-date, .assignment-date, time, [class*='due'], [class*='date']",
+    "link": "a[href*='assignment'], a[href*='view'], a.assignment-link",
+    "course": ".course-name, .course-code, [class*='course']"
+  },
+  "announcements": {
+    "container": "#announcement-list, .announcements, [class*='announcement']",
+    "items": ".announcement-item, .announcement, article, [class*='announcement-entry']",
+    "title": ".announcement-title, .title, h3, h4",
+    "date": ".post-date, .announcement-date, time, [class*='date']",
+    "link": "a[href*='announcement'], a[href*='view'], a.announcement-link",
+    "course": ".course-name, .course-code, [class*='course']"
+  },
+  "date_keywords": [
+    "due",
+    "deadline",
+    "submit by",
+    "closes",
+    "by 23:59",
+    "11:59 PM",
+    "opens",
+    "due date"
+  ],
+  "type_patterns": {
+    "HW": ["homework", "hw", "problem set", "ps", "assignment"],
+    "Quiz": ["quiz", "reading quiz", "practice quiz"],
+    "Project": ["project", "deliverable", "submission", "poster", "report"],
+    "Exam": ["exam", "midterm", "final", "test"],
+    "Other": []
+  }
+}

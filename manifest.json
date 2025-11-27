@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "SUTD Deadline Center",
+  "version": "1.0.0",
+  "description": "Automatically extract and organize all deadlines from eDimension and Gradescope into one unified dashboard with calendar sync.",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://edimension.sutd.edu.sg/*",
+    "https://www.gradescope.com/courses/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.jpg",
+      "48": "icon48.jpg",
+      "128": "icon128.jpg"
+    }
+  },
+  "options_page": "options.html",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://edimension.sutd.edu.sg/*",
+        "https://www.gradescope.com/courses/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": true,
+      "match_about_blank": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*", "public/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "icons": {
+    "16": "icon16.jpg",
+    "48": "icon48.jpg",
+    "128": "icon128.jpg"
+  }
+}

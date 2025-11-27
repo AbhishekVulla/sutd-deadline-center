@@ -1,0 +1,29 @@
+{
+  "name": "deadline-center-edimension-companion",
+  "version": "1.0.0",
+  "description": "Chrome/Edge extension to extract and organize deadlines from eDimension",
+  "type": "module",
+  "scripts": {
+    "dev": "vite build --watch --mode development",
+    "build": "tsc && vite build && esbuild src/content/content-unified.ts --bundle --format=iife --outfile=dist/content.js --target=es2020 && node -e \"const fs = require('fs'); const content = fs.readFileSync('dist/content.js', 'utf8'); const hasImport = /^\\s*(import|export)\\s/m.test(content); if (hasImport) { console.error('ERROR: content.js still contains import/export statements!'); process.exit(1); } else { console.log('✓ content.js is a valid IIFE with no imports'); }\"",
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "dependencies": {
+    "dayjs": "^1.11.10",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.1.27",
+    "@types/node": "^20.11.5",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "@vitejs/plugin-react": "^4.2.1",
+    "esbuild": "^0.27.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12",
+    "vite-plugin-static-copy": "^1.0.6",
+    "vitest": "^1.2.1"
+  }
+}
