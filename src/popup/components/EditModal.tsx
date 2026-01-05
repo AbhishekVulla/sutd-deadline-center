@@ -25,7 +25,6 @@ function EditModal({ item, onClose, onSave, settings }: Props) {
   const [type, setType] = useState<DeadlineType>(item.type || 'HW');
   const [date, setDate] = useState(dueDate.format('YYYY-MM-DD'));
   const [time, setTime] = useState(isNewItem ? '23:59' : dueDate.format('HH:mm'));
-  const [confirmed, setConfirmed] = useState(isNewItem ? true : item.confirmed);
 
   async function handleSave() {
     if (!title.trim() || !course.trim()) {
@@ -51,7 +50,7 @@ function EditModal({ item, onClose, onSave, settings }: Props) {
           source: 'Manual',
           updated: false,
           sequence: 1,
-          confirmed,
+          confirmed: true,
           missing_time: false
         };
         await saveDeadlines([...deadlines, newDeadline]);
@@ -64,7 +63,6 @@ function EditModal({ item, onClose, onSave, settings }: Props) {
               course,
               type,
               due_at_iso: newDueAt,
-              confirmed,
               missing_time: false
             };
           }
@@ -143,17 +141,6 @@ function EditModal({ item, onClose, onSave, settings }: Props) {
               className="form-input"
             />
           </div>
-        </div>
-
-        <div className="form-group">
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
-              checked={confirmed}
-              onChange={(e) => setConfirmed(e.target.checked)}
-            />
-            <span>Confirmed (required for calendar export)</span>
-          </label>
         </div>
 
         {!isNewItem && (

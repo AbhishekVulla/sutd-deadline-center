@@ -103,7 +103,7 @@ const DATE_PATTERNS = [
   }
 ];
 
-export function parseDeadlineDate(text: string): ParsedDate | null {
+export function parseDeadlineDate(text: string, contextYear?: number): ParsedDate | null {
   text = text.replace(/\(UTC\+8\)/gi, '').trim();
 
   for (const pattern of DATE_PATTERNS) {
@@ -137,7 +137,7 @@ export function parseDeadlineDate(text: string): ParsedDate | null {
       }
 
       if (pattern.needsYear) {
-        dateStr = inferYear(dateStr);
+        dateStr = contextYear ? `${dateStr} ${contextYear}` : inferYear(dateStr);
       }
 
       if (pattern.dateOnly) {
@@ -153,11 +153,14 @@ export function parseDeadlineDate(text: string): ParsedDate | null {
       let parsedDate = dayjs.tz(dateStr, pattern.format, 'Asia/Singapore');
       
       if (!parsedDate.isValid() && !pattern.needsYear) {
-        dateStr = inferYear(dateStr);
+        dateStr = contextYear ? `${dateStr} ${contextYear}` : inferYear(dateStr);
         parsedDate = dayjs.tz(dateStr, pattern.format, 'Asia/Singapore');
       }
 
       if (parsedDate.isValid()) {
+        if (contextYear && !(/\d{4}/.test(match[0]))) {
+          parsedDate = parsedDate.year(contextYear);
+        }
         return {
           due_at_iso: parsedDate.toISOString(),
           confidence: pattern.confidence,
@@ -173,11 +176,11 @@ export function parseDeadlineDate(text: string): ParsedDate | null {
   return null;
 }
 
-export function extractDeadlineFromText(text: string): ParsedDate | null {
+export function extractDeadlineFromText(text: string, contextYear?: number): ParsedDate | null {
   const keywords = ['due', 'deadline', 'submit by', 'closes', 'by 23:59', '11:59 PM'];
   const hasKeyword = keywords.some(kw => text.toLowerCase().includes(kw));
   
-  const parsed = parseDeadlineDate(text);
+  const parsed = parseDeadlineDate(text, contextYear);
   if (!parsed) return null;
 
   if (hasKeyword) {
@@ -187,4 +190,20 @@ export function extractDeadlineFromText(text: string): ParsedDate | null {
   }
 
   return parsed;
+}
+
+export function extractTermYear(headerText: string | null | undefined, subtitleText: string | null | undefined): number | null {
+  const extractYearFromText = (text: string | null | undefined): number | null => {
+    if (!text) return null;
+    const yearMatch = text.match(/\b(20\d{2})\b/);
+    return yearMatch ? parseInt(yearMatch[1], 10) : null;
+  };
+
+  const headerYear = extractYearFromText(headerText);
+  if (headerYear) return headerYear;
+
+  const subtitleYear = extractYearFromText(subtitleText);
+  if (subtitleYear) return subtitleYear;
+
+  return null;
 }

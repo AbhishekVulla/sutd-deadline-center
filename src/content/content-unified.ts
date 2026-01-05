@@ -1,5 +1,5 @@
 // Unified content script for eDimension (Activity Stream + Calendar) + Gradescope
-import { parseDeadlineDate } from '../parsing/dateParser';
+import { parseDeadlineDate, extractTermYear } from '../parsing/dateParser';
 import { normalizeCourse } from '../parsing/courseNormalizer';
 import { generateId } from '../parsing/hash';
 
@@ -344,6 +344,21 @@ async function parseGradescopeAssignments(): Promise<SimpleDeadline[]> {
   const subtitleElem = document.querySelector('.sidebar--subtitle');
   const headerTitleElem = document.querySelector('.courseHeader--title');
   
+  // V1.1.5 FIX: Extract term year from course header for accurate date parsing
+  // Primary: .courseHeader--term (e.g., "Fall 2025")
+  // Fallback: .sidebar--subtitle (e.g., "2025 September Term - ...")
+  const termElem = document.querySelector('.courseHeader--term');
+  const termYear = extractTermYear(
+    termElem?.textContent?.trim(),
+    subtitleElem?.textContent?.trim()
+  );
+  
+  if (termYear) {
+    console.log(`[Gradescope Extractor] Extracted term year: ${termYear}`);
+  } else {
+    console.warn('[Gradescope Extractor] Could not extract term year from page, falling back to heuristic');
+  }
+  
   let courseName = subtitleElem?.textContent?.trim() || headerTitleElem?.textContent?.trim() || `Course ${courseId}`;
   
   // PHASE 1: Extract courseCode using helper (XX.XXX pattern)
@@ -489,11 +504,12 @@ async function parseGradescopeAssignments(): Promise<SimpleDeadline[]> {
         title,
         rawDueText,
         lateDueDate,
-        course
+        course,
+        termYear
       });
       
-      // Parse date
-      const parsed = parseDeadlineDate(rawDueText);
+      // Parse date with term year context (V1.1.5 FIX)
+      const parsed = parseDeadlineDate(rawDueText, termYear || undefined);
       if (!parsed) {
         console.warn(`[Gradescope Extractor] Row ${index}: Could not parse date "${rawDueText}"`);
         continue;

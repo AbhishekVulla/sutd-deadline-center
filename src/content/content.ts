@@ -117,10 +117,3 @@ if (document.readyState === 'loading') {
   extractDeadlines();
   setupSPAHooks();
 }
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === 'EXTRACT_NOW') {
-    extractDeadlines().then(() => sendResponse({ success: true }));
-    return true;
-  }
-});

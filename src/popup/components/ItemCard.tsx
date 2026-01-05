@@ -25,10 +25,6 @@ function ItemCard({ item, displayCourseName, onEdit, settings }: Props) {
 
   function handleDownload(e: React.MouseEvent) {
     e.stopPropagation();
-    if (!item.confirmed) {
-      alert('Please confirm this deadline before downloading the calendar file.');
-      return;
-    }
     downloadICS(item, settings);
   }
 
@@ -38,7 +34,7 @@ function ItemCard({ item, displayCourseName, onEdit, settings }: Props) {
   }
 
   return (
-    <div className={`item-card ${item.confirmed ? 'confirmed' : ''}`} onClick={onEdit}>
+    <div className="item-card" onClick={onEdit}>
       <div className="item-header">
         <span className="course-badge">{displayCourseName}</span>
         <span className="type-badge">{item.type}</span>
@@ -55,7 +51,6 @@ function ItemCard({ item, displayCourseName, onEdit, settings }: Props) {
       <div className="item-chips">
         {item.updated && <span className="chip chip-updated">Updated</span>}
         {item.missing_time && <span className="chip chip-warning">Missing time</span>}
-        {item.confirmed && <span className="chip chip-confirmed">✓ Confirmed</span>}
       </div>
       <div className="item-actions" onClick={(e) => e.stopPropagation()}>
         {item.source_url && item.source !== 'Manual' && (
@@ -63,11 +58,9 @@ function ItemCard({ item, displayCourseName, onEdit, settings }: Props) {
             🔗 Source
           </button>
         )}
-        {item.confirmed && (
-          <button onClick={handleDownload} className="btn-download" title="Download .ics">
-            📅 Download .ics
-          </button>
-        )}
+        <button onClick={handleDownload} className="btn-download" title="Download .ics">
+          📅 Download .ics
+        </button>
       </div>
     </div>
   );

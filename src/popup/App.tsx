@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { DeadlineItem, Settings } from '../types';
 import { getDeadlines, getSettings } from '../storage';
+import { downloadMergedICS } from '../calendar';
 import ItemCard from './components/ItemCard';
 import Filters from './components/Filters';
 import EditModal from './components/EditModal';
 import './styles.css';
 
 type TimeGroup = 'thisWeek' | 'nextWeek' | 'later' | 'overdue';
+
+const OVERDUE_EXPIRY_DAYS = 3;
 
 // PHASE 2: Display-only course name cleaner (does NOT affect grouping/dedup logic)
 function getDisplayCourseName(rawName: string, courseCode?: string | null): string {
@@ -30,6 +33,25 @@ function getDisplayCourseName(rawName: string, courseCode?: string | null): stri
   return name;
 }
 
+/**
+ * SINGLE SOURCE OF TRUTH: Determines if a deadline is "visible"
+ * A deadline is visible if:
+ * 1. It's not overdue, OR
+ * 2. It's overdue but within the OVERDUE_EXPIRY_DAYS threshold
+ */
+function isDeadlineVisible(deadline: DeadlineItem): boolean {
+  const now = new Date();
+  const dueDate = new Date(deadline.due_at_iso);
+  
+  if (dueDate >= now) {
+    return true;
+  }
+  
+  const overdueThreshold = new Date(now);
+  overdueThreshold.setDate(now.getDate() - OVERDUE_EXPIRY_DAYS);
+  return dueDate >= overdueThreshold;
+}
+
 function App() {
   const [deadlines, setDeadlines] = useState<DeadlineItem[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -37,6 +59,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [editingItem, setEditingItem] = useState<DeadlineItem | null>(null);
   const [loading, setLoading] = useState(true);
+  const [overdueExpanded, setOverdueExpanded] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -57,66 +80,82 @@ function App() {
     }
   }
 
-  // PHASE 1: Build course grouping map (courseCode-based deduplication)
-  // Map: courseKey -> raw name
-  // For items with courseCode: key = courseCode, value = longest course name with that code
-  // For items without courseCode: key = course name, value = course name
-  const courseKeyToName = new Map<string, string>();
-  const courseNameToKey = new Map<string, string>();
-  const courseKeyToCode = new Map<string, string | null>();
-  
-  for (const d of deadlines) {
-    if (d.courseCode) {
-      // Has courseCode - use it as the grouping key
-      const existing = courseKeyToName.get(d.courseCode);
-      // Prefer longer course names (eDimension "10.015 – Physical World" over Gradescope "Physical World (2025)")
-      if (!existing || d.course.length > existing.length) {
-        courseKeyToName.set(d.courseCode, d.course);
-        courseKeyToCode.set(d.courseCode, d.courseCode);
+  // STEP 1: Filter to only VISIBLE deadlines (applies overdue threshold)
+  // This is the canonical list - all other filtering builds on top of this
+  const baseVisibleDeadlines = useMemo(() => 
+    deadlines.filter(isDeadlineVisible), 
+    [deadlines]
+  );
+
+  // STEP 2: Build course grouping map from VISIBLE deadlines only
+  // This ensures courses with only expired overdue items don't appear in dropdown
+  const { courseKeyToName, courseNameToKey, courseKeyToCode } = useMemo(() => {
+    const keyToName = new Map<string, string>();
+    const nameToKey = new Map<string, string>();
+    const keyToCode = new Map<string, string | null>();
+    
+    for (const d of baseVisibleDeadlines) {
+      if (d.courseCode) {
+        const existing = keyToName.get(d.courseCode);
+        if (!existing || d.course.length > existing.length) {
+          keyToName.set(d.courseCode, d.course);
+          keyToCode.set(d.courseCode, d.courseCode);
+        }
+        nameToKey.set(d.course, d.courseCode);
+      } else {
+        keyToName.set(d.course, d.course);
+        nameToKey.set(d.course, d.course);
+        keyToCode.set(d.course, null);
       }
-      courseNameToKey.set(d.course, d.courseCode);
-    } else {
-      // No courseCode - use course name as key
-      courseKeyToName.set(d.course, d.course);
-      courseNameToKey.set(d.course, d.course);
-      courseKeyToCode.set(d.course, null);
     }
-  }
+    
+    return { courseKeyToName: keyToName, courseNameToKey: nameToKey, courseKeyToCode: keyToCode };
+  }, [baseVisibleDeadlines]);
   
-  // PHASE 2: Build display course list with cleaned names
-  const courses = Array.from(new Set(courseKeyToName.values())).sort();
-  const courseDisplayNames = new Map<string, string>();
-  for (const rawName of courses) {
-    const key = courseNameToKey.get(rawName);
-    const code = key ? courseKeyToCode.get(key) : null;
-    courseDisplayNames.set(rawName, getDisplayCourseName(rawName, code));
-  }
+  // STEP 3: Build display course list with cleaned names
+  const courses = useMemo(() => 
+    Array.from(new Set(courseKeyToName.values())).sort(),
+    [courseKeyToName]
+  );
   
-  const filteredDeadlines = deadlines.filter(item => {
-    if (selectedCourse !== 'all') {
-      // PHASE 1: Match by courseCode if both have it, otherwise by course name
-      const selectedKey = courseNameToKey.get(selectedCourse);
-      const itemKey = item.courseCode || item.course;
-      
-      if (selectedKey !== itemKey && item.course !== selectedCourse) {
+  const courseDisplayNames = useMemo(() => {
+    const displayNames = new Map<string, string>();
+    for (const rawName of courses) {
+      const key = courseNameToKey.get(rawName);
+      const code = key ? courseKeyToCode.get(key) : null;
+      displayNames.set(rawName, getDisplayCourseName(rawName, code));
+    }
+    return displayNames;
+  }, [courses, courseNameToKey, courseKeyToCode]);
+  
+  // STEP 4: Apply user filters (course + search) to visible deadlines
+  // This is the FINAL list used for export count, export contents, and UI
+  const visibleDeadlines = useMemo(() => {
+    return baseVisibleDeadlines.filter(item => {
+      if (selectedCourse !== 'all') {
+        const selectedKey = courseNameToKey.get(selectedCourse);
+        const itemKey = item.courseCode || item.course;
+        
+        if (selectedKey !== itemKey && item.course !== selectedCourse) {
+          return false;
+        }
+      }
+      if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
       }
-    }
-    if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
-    return true;
-  });
-
-  const groupedDeadlines = groupByTime(filteredDeadlines);
-
-  function handleRefresh() {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]?.id) {
-        chrome.tabs.sendMessage(tabs[0].id, { type: 'EXTRACT_NOW' });
-        setTimeout(loadData, 1000);
-      }
+      return true;
     });
+  }, [baseVisibleDeadlines, selectedCourse, searchQuery, courseNameToKey]);
+
+  // STEP 5: Group visible deadlines by time for UI rendering
+  const groupedDeadlines = useMemo(() => 
+    groupByTime(visibleDeadlines),
+    [visibleDeadlines]
+  );
+
+  function handleExportVisible() {
+    if (!settings) return;
+    downloadMergedICS(visibleDeadlines, settings);
   }
 
   if (loading) {
@@ -135,8 +174,8 @@ function App() {
           <button onClick={() => setEditingItem({} as DeadlineItem)} className="add-btn" title="Add deadline manually">
             + Add Deadline
           </button>
-          <button onClick={handleRefresh} className="refresh-btn" title="Refresh from eDimension">
-            ↻ Refresh
+          <button onClick={handleExportVisible} className="export-btn" title="Export all visible deadlines to calendar" disabled={visibleDeadlines.length === 0}>
+            📅 Export Visible ({visibleDeadlines.length})
           </button>
         </div>
       </header>
@@ -154,8 +193,18 @@ function App() {
         {Object.entries(groupedDeadlines).map(([group, items]) => (
           items.length > 0 && (
             <div key={group} className="time-group">
-              <h2 className="group-title">{formatGroupTitle(group as TimeGroup)}</h2>
-              {items.map(item => {
+              {group === 'overdue' ? (
+                <h2 
+                  className="group-title group-title-collapsible" 
+                  onClick={() => setOverdueExpanded(!overdueExpanded)}
+                >
+                  <span className={`collapse-chevron ${overdueExpanded ? 'expanded' : ''}`}>▶</span>
+                  {formatGroupTitle(group as TimeGroup)} ({items.length})
+                </h2>
+              ) : (
+                <h2 className="group-title">{formatGroupTitle(group as TimeGroup)}</h2>
+              )}
+              {(group !== 'overdue' || overdueExpanded) && items.map(item => {
                 const displayName = getDisplayCourseName(item.course, item.courseCode);
                 return (
                   <ItemCard
@@ -171,7 +220,7 @@ function App() {
           )
         ))}
 
-        {filteredDeadlines.length === 0 && (
+        {visibleDeadlines.length === 0 && (
           <div className="empty-state">
             <div className="empty-icon">📭</div>
             <h3>No deadlines yet</h3>
@@ -180,7 +229,7 @@ function App() {
               <li>
                 Visit <a href="https://edimension.sutd.edu.sg/ultra/deadline" target="_blank" rel="noopener noreferrer">
                   eDimension Calendar
-                </a>
+                </a> — deadlines are extracted automatically
               </li>
               <li>
                 Open each course from your{' '}
@@ -188,8 +237,7 @@ function App() {
                   Gradescope dashboard
                 </a>
               </li>
-              <li>Click <strong>Refresh</strong> in this popup</li>
-              <li>Export deadlines to your calendar</li>
+              <li>Come back here to export deadlines to your calendar</li>
             </ol>
           </div>
         )}
@@ -224,6 +272,8 @@ function groupByTime(deadlines: DeadlineItem[]): Record<TimeGroup, DeadlineItem[
     later: []
   };
 
+  // NOTE: Input deadlines are already filtered by isDeadlineVisible()
+  // so we don't need to re-filter overdue items here
   for (const deadline of deadlines) {
     const dueDate = new Date(deadline.due_at_iso);
 

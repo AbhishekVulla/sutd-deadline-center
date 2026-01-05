@@ -45,8 +45,8 @@ SUTD Deadline Center automatically extracts all your deadlines and displays them
 
 1. Clone this repo:
    ```bash
-   git clone https://github.com/AbhishekVulla/deadline-center-extension.git
-   cd deadline-center-extension
+   git clone https://github.com/AbhishekVulla/sutd-deadline-center.git
+   cd sutd-deadline-center
    ```
 
 2. Install dependencies:
@@ -92,12 +92,13 @@ SUTD Deadline Center automatically extracts all your deadlines and displays them
 ## Project Structure
 
 ```
-deadline-center-extension/
+sutd-deadline-center/
 ├── src/
 │   ├── popup/          # React popup UI
 │   ├── content/        # Content scripts for eDimension & Gradescope
 │   ├── options/        # Options page
-│   └── lib/            # Shared utilities
+│   ├── parsing/        # Date parsing & normalization
+│   └── config/         # DOM selectors configuration
 ├── public/             # Icons and static assets
 ├── manifest.json       # Extension manifest
 ├── package.json        # Dependencies
@@ -107,10 +108,18 @@ deadline-center-extension/
 
 ---
 
+## Privacy & Data
+
+- **Local Only**: All data stored in `chrome.storage.local`
+- **No Network Calls**: Extension makes zero external requests
+- **No Credentials**: Never accesses or stores passwords
+- **No Grades**: Only extracts publicly visible deadline text
+
+---
+
 ## Contributing
 
 Contributions are welcome! If you want to:
-
 - **Report a bug** → Open an issue
 - **Request a feature** → Open an issue
 - **Submit a fix** → Fork, make changes, open a PR
@@ -119,26 +128,14 @@ Contributions are welcome! If you want to:
 
 ## Attribution
 
-If you use this project or substantial parts of its codebase in coursework, research, or other projects, you must credit:
+If you use this project or substantial parts of its codebase in coursework, research, or other projects, please credit:
 
-> **SUTD Deadline Center** – Abhishek Vulla  
-> https://github.com/AbhishekVulla/deadline-center-extension
-
-Please don't pass this off as your own original work.
+**Abhishek Vulla** - https://github.com/AbhishekVulla
 
 ---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) file for details.
 
----
-
-## Acknowledgments
-
-- Built as part of a **Building 0** initiative at SUTD
-- Thanks to all Freshmores who tested and provided feedback
-
----
-
-**Made with caffeine and deadlines by [Abhishek Vulla](https://github.com/AbhishekVulla)**
+Built for SUTD students.

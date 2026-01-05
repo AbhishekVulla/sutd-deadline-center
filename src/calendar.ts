@@ -104,3 +104,90 @@ export function downloadICS(deadline: DeadlineItem, settings: Settings): void {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+export function generateMergedICS(deadlines: DeadlineItem[], settings: Settings): string {
+  const events = deadlines.map(deadline => {
+    const dueDate = new Date(deadline.due_at_iso);
+    const startDate = formatICSDate(dueDate);
+    const endDate = formatICSDate(new Date(dueDate.getTime() + 15 * 60 * 1000));
+    
+    const alarms: string[] = [];
+    if (settings.reminders.hours_48) {
+      alarms.push(createAlarm(48 * 60));
+    }
+    if (settings.reminders.hours_24) {
+      alarms.push(createAlarm(24 * 60));
+    }
+    if (settings.reminders.hours_2) {
+      alarms.push(createAlarm(2 * 60));
+    }
+    
+    const formattedDate = dueDate.toLocaleString('en-SG', {
+      timeZone: settings.timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+    
+    const description = [
+      `Course: ${deadline.course}`,
+      `Type: ${deadline.type}`,
+      `Due: ${formattedDate} (${settings.timezone})`,
+      `Source: ${deadline.source}`,
+      deadline.source_url ? `Link: ${deadline.source_url}` : ''
+    ].filter(Boolean).join('\\n');
+    
+    return [
+      'BEGIN:VEVENT',
+      `UID:${deadline.id}@deadline-center`,
+      `DTSTAMP:${formatICSDate(new Date())}`,
+      `DTSTART:${startDate}`,
+      `DTEND:${endDate}`,
+      `SUMMARY:${escapeICS(deadline.title)}`,
+      `LOCATION:${escapeICS(deadline.course)}`,
+      `DESCRIPTION:${escapeICS(description)}`,
+      `SEQUENCE:${deadline.sequence}`,
+      `STATUS:CONFIRMED`,
+      ...alarms,
+      'END:VEVENT'
+    ].join('\r\n');
+  });
+  
+  const icsContent = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Deadline Center//eDimension Companion//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    ...events,
+    'END:VCALENDAR'
+  ].join('\r\n');
+  
+  return icsContent;
+}
+
+export function downloadMergedICS(deadlines: DeadlineItem[], settings: Settings): void {
+  if (deadlines.length === 0) {
+    alert('No deadlines to export. Apply filters to see deadlines first.');
+    return;
+  }
+  
+  const icsContent = generateMergedICS(deadlines, settings);
+  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0];
+  const filename = `deadlines_${dateStr}_${deadlines.length}items.ics`;
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
