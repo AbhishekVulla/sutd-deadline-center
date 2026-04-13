@@ -17,7 +17,11 @@ Deadlines are scattered across eDimension, Gradescope, and random chats. Student
 
 SUTD Deadline Center automatically extracts all your deadlines and displays them in one unified dashboard inside your browser.
 
-![Screenshot](screenshots/course-filter.png)
+![eDimension Dashboard](screenshots/main-view.png)
+
+![Gradescope + Course Filter](screenshots/course-filter.png)
+
+![Calendar Export to Google Calendar](screenshots/calendar-export.png)
 
 ---
 
@@ -73,7 +77,7 @@ SUTD Deadline Center automatically extracts all your deadlines and displays them
 2. **Visit Gradescope** → Open any course page (e.g., `gradescope.com/courses/12345`)
 3. **Click the extension icon** → See all your deadlines in one dashboard
 4. **Filter & Search** → Use the dropdown to filter by course
-5. **Export to Calendar** → Click the calendar icon on any deadline to download `.ics`
+5. **Export to Calendar** → Click any deadline to expand, then download `.ics`
 
 ---
 

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SUTD Deadline Center",
-  "version": "1.1.5",
+  "version": "1.2.1",
   "description": "Automatically extract and organize all deadlines from eDimension and Gradescope into one unified dashboard with calendar sync.",
   "permissions": [
     "storage"

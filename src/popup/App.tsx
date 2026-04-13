@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { DeadlineItem, Settings } from '../types';
 import { getDeadlines, getSettings } from '../storage';
 import { downloadMergedICS } from '../calendar';
-import ItemCard from './components/ItemCard';
+import DeadlineRow from './components/DeadlineRow';
 import Filters from './components/Filters';
 import EditModal from './components/EditModal';
 import './styles.css';
@@ -26,7 +26,10 @@ function getDisplayCourseName(rawName: string, courseCode?: string | null): stri
     // For courses without XX.XXX code (e.g., EWET), drop everything before the last "–"
     const lastDashIdx = name.lastIndexOf('–');
     if (lastDashIdx !== -1) {
-      name = name.slice(lastDashIdx + 1).trim();
+      const prefix = name.slice(0, lastDashIdx).trim();
+      if (!/^\d+\.\d+/.test(prefix)) {
+        name = name.slice(lastDashIdx + 1).trim();
+      }
     }
   }
   
@@ -60,6 +63,7 @@ function App() {
   const [editingItem, setEditingItem] = useState<DeadlineItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [overdueExpanded, setOverdueExpanded] = useState(false);
+  const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -172,10 +176,10 @@ function App() {
         <h1>Deadline Center</h1>
         <div className="header-actions">
           <button onClick={() => setEditingItem({} as DeadlineItem)} className="add-btn" title="Add deadline manually">
-            + Add Deadline
+            + Add
           </button>
           <button onClick={handleExportVisible} className="export-btn" title="Export all visible deadlines to calendar" disabled={visibleDeadlines.length === 0}>
-            📅 Export Visible ({visibleDeadlines.length})
+            Export ({visibleDeadlines.length})
           </button>
         </div>
       </header>
@@ -207,11 +211,14 @@ function App() {
               {(group !== 'overdue' || overdueExpanded) && items.map(item => {
                 const displayName = getDisplayCourseName(item.course, item.courseCode);
                 return (
-                  <ItemCard
+                  <DeadlineRow
                     key={item.id}
                     item={item}
                     displayCourseName={displayName}
+                    isExpanded={expandedRowId === item.id}
+                    onToggleExpand={() => setExpandedRowId(expandedRowId === item.id ? null : item.id)}
                     onEdit={() => setEditingItem(item)}
+                    isOverdue={group === 'overdue'}
                     settings={settings!}
                   />
                 );
@@ -224,21 +231,7 @@ function App() {
           <div className="empty-state">
             <div className="empty-icon">📭</div>
             <h3>No deadlines yet</h3>
-            <p>To get started:</p>
-            <ol className="empty-instructions">
-              <li>
-                Visit <a href="https://edimension.sutd.edu.sg/ultra/deadline" target="_blank" rel="noopener noreferrer">
-                  eDimension Calendar
-                </a> — deadlines are extracted automatically
-              </li>
-              <li>
-                Open each course from your{' '}
-                <a href="https://www.gradescope.com/" target="_blank" rel="noopener noreferrer">
-                  Gradescope dashboard
-                </a>
-              </li>
-              <li>Come back here to export deadlines to your calendar</li>
-            </ol>
+            <p>Visit <a href="https://edimension.sutd.edu.sg/ultra/deadline" target="_blank" rel="noopener noreferrer">eDimension Calendar</a> or open a course on <a href="https://www.gradescope.com/" target="_blank" rel="noopener noreferrer">Gradescope</a> to start.</p>
           </div>
         )}
       </div>

@@ -34,8 +34,8 @@ export function generateICS(deadline: DeadlineItem, settings: Settings): string 
     `Due: ${formattedDate} (${settings.timezone})`,
     `Source: ${deadline.source}`,
     `Link: ${deadline.source_url}`
-  ].join('\\n');
-  
+  ].join('\n');
+
   const icsContent = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -48,7 +48,6 @@ export function generateICS(deadline: DeadlineItem, settings: Settings): string 
     `DTSTART:${startDate}`,
     `DTEND:${endDate}`,
     `SUMMARY:${escapeICS(deadline.title)}`,
-    `LOCATION:${escapeICS(deadline.course)}`,
     `DESCRIPTION:${escapeICS(description)}`,
     `SEQUENCE:${deadline.sequence}`,
     `STATUS:CONFIRMED`,
@@ -138,8 +137,8 @@ export function generateMergedICS(deadlines: DeadlineItem[], settings: Settings)
       `Due: ${formattedDate} (${settings.timezone})`,
       `Source: ${deadline.source}`,
       deadline.source_url ? `Link: ${deadline.source_url}` : ''
-    ].filter(Boolean).join('\\n');
-    
+    ].filter(Boolean).join('\n');
+
     return [
       'BEGIN:VEVENT',
       `UID:${deadline.id}@deadline-center`,
@@ -147,7 +146,6 @@ export function generateMergedICS(deadlines: DeadlineItem[], settings: Settings)
       `DTSTART:${startDate}`,
       `DTEND:${endDate}`,
       `SUMMARY:${escapeICS(deadline.title)}`,
-      `LOCATION:${escapeICS(deadline.course)}`,
       `DESCRIPTION:${escapeICS(description)}`,
       `SEQUENCE:${deadline.sequence}`,
       `STATUS:CONFIRMED`,

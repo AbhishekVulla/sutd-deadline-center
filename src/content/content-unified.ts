@@ -3,7 +3,9 @@ import { parseDeadlineDate, extractTermYear } from '../parsing/dateParser';
 import { normalizeCourse } from '../parsing/courseNormalizer';
 import { generateId } from '../parsing/hash';
 
-console.log('[DC] Content script injected into:', window.location.href, 'Frame:', window === window.top ? 'top' : 'iframe');
+const DEBUG = false; // Set to true for development logging
+
+DEBUG && console.log('[DC] Content script injected into:', window.location.href, 'Frame:', window === window.top ? 'top' : 'iframe');
 
 interface SimpleDeadline {
   id: string;
@@ -47,11 +49,11 @@ async function parseActivityStream(): Promise<SimpleDeadline[]> {
   const deadlines: SimpleDeadline[] = [];
   
   if (!window.location.pathname.includes('/ultra/stream')) {
-    console.log('[Activity Extractor] Not on stream page');
+    DEBUG && console.log('[Activity Extractor] Not on stream page');
     return deadlines;
   }
   
-  console.log('[Activity Extractor] Searching for stream items...');
+  DEBUG && console.log('[Activity Extractor] Searching for stream items...');
   
   const selectors = [
     'li.stream-item-container',
@@ -64,13 +66,13 @@ async function parseActivityStream(): Promise<SimpleDeadline[]> {
   for (const selector of selectors) {
     items = Array.from(document.querySelectorAll(selector));
     if (items.length > 0) {
-      console.log(`[Activity Extractor] Found ${items.length} items with selector: ${selector}`);
+      DEBUG && console.log(`[Activity Extractor] Found ${items.length} items with selector: ${selector}`);
       break;
     }
   }
   
   if (items.length === 0) {
-    console.log('[Activity Extractor] No stream items found');
+    DEBUG && console.log('[Activity Extractor] No stream items found');
     return deadlines;
   }
   
@@ -95,7 +97,7 @@ async function parseActivityStream(): Promise<SimpleDeadline[]> {
       // Use shared parseDeadlineDate utility for proper timezone handling
       const parsed = parseDeadlineDate(fullText);
       if (!parsed) {
-        console.log(`[Activity Extractor] No date found for: ${title}`);
+        DEBUG && console.log(`[Activity Extractor] No date found for: ${title}`);
         continue;
       }
       
@@ -125,14 +127,14 @@ async function parseActivityStream(): Promise<SimpleDeadline[]> {
       };
       
       deadlines.push(deadline);
-      console.log(`[Activity Extractor] Extracted: ${course} - ${title}`);
+      DEBUG && console.log(`[Activity Extractor] Extracted: ${course} - ${title}`);
       
     } catch (error) {
       console.error(`[Activity Extractor] Error parsing item ${index}:`, error);
     }
   }
   
-  console.log(`[Activity Extractor] Successfully extracted ${deadlines.length} deadlines`);
+  DEBUG && console.log(`[Activity Extractor] Successfully extracted ${deadlines.length} deadlines`);
   return deadlines;
 }
 
@@ -152,7 +154,7 @@ function waitForCalendarItems(timeout: number = 10000): Promise<boolean> {
       for (const selector of checkSelectors) {
         const elements = document.querySelectorAll(selector);
         if (elements.length > 0) {
-          console.log(`[Calendar Extractor] ✓ Items appeared after ${Date.now() - startTime}ms using selector: ${selector}`);
+          DEBUG && console.log(`[Calendar Extractor] ✓ Items appeared after ${Date.now() - startTime}ms using selector: ${selector}`);
           resolve(true);
           return;
         }
@@ -180,15 +182,15 @@ async function parseCalendarDeadlines(): Promise<SimpleDeadline[]> {
   // PHASE 1 FIX: Use location.href instead of pathname for SPA navigation timing
   if (!window.location.href.includes('/ultra/deadline') && 
       !window.location.href.includes('/ultra/calendar')) {
-    console.log('[Calendar Extractor] Not on calendar/deadline page');
+    DEBUG && console.log('[Calendar Extractor] Not on calendar/deadline page');
     return deadlines;
   }
   
-  console.log('[Calendar Extractor] Searching for deadline items...');
-  console.log('[Calendar Extractor] Current URL:', window.location.href);
+  DEBUG && console.log('[Calendar Extractor] Searching for deadline items...');
+  DEBUG && console.log('[Calendar Extractor] Current URL:', window.location.href);
   
   // TIMING FIX: Wait for Angular to render deadline items (SPA loads async)
-  console.log('[Calendar Extractor] Waiting for calendar items to load...');
+  DEBUG && console.log('[Calendar Extractor] Waiting for calendar items to load...');
   const itemsAppeared = await waitForCalendarItems(15000);
   
   if (!itemsAppeared) {
@@ -201,10 +203,10 @@ async function parseCalendarDeadlines(): Promise<SimpleDeadline[]> {
     document.querySelectorAll<HTMLDivElement>('.element-card.due-item.element-card-deadline')
   );
   
-  console.log(`[Calendar Extractor] Found ${detailsElements.length} deadline items`);
+  DEBUG && console.log(`[Calendar Extractor] Found ${detailsElements.length} deadline items`);
   
   if (detailsElements.length === 0) {
-    console.log('[Calendar Extractor] No deadline items found with selector .element-card.due-item.element-card-deadline');
+    DEBUG && console.log('[Calendar Extractor] No deadline items found with selector .element-card.due-item.element-card-deadline');
     return deadlines;
   }
   
@@ -225,8 +227,9 @@ async function parseCalendarDeadlines(): Promise<SimpleDeadline[]> {
       let rawDueText = '';
       for (const span of contentSpans) {
         const text = span.textContent?.trim() || '';
-        if (text.startsWith('Due date:')) {
-          rawDueText = text.replace(/^Due date:\s*/i, '').trim();
+        const dueDateMatch = text.match(/^Due date(?:\s*\d+)?:\s*(.*)/i);
+        if (dueDateMatch) {
+          rawDueText = dueDateMatch[1].trim();
           break;
         }
       }
@@ -248,7 +251,7 @@ async function parseCalendarDeadlines(): Promise<SimpleDeadline[]> {
       const sourceUrl = 'https://edimension.sutd.edu.sg/ultra/deadline';
       
       // PHASE 1: Log extracted raw data
-      console.log(`[Calendar Extractor] Item ${index} RAW DATA:`, {
+      DEBUG && console.log(`[Calendar Extractor] Item ${index} RAW DATA:`, {
         title,
         rawDueText,
         courseRaw,
@@ -290,7 +293,7 @@ async function parseCalendarDeadlines(): Promise<SimpleDeadline[]> {
       };
       
       // PHASE 1: Detailed logging of processed data
-      console.log(`[Calendar Extractor] Item ${index} PROCESSED:`, {
+      DEBUG && console.log(`[Calendar Extractor] Item ${index} PROCESSED:`, {
         id: deadline.id,
         title: deadline.title,
         course: deadline.course,
@@ -308,8 +311,8 @@ async function parseCalendarDeadlines(): Promise<SimpleDeadline[]> {
     }
   }
   
-  console.log(`[Calendar Extractor] ✅ PHASE 1 COMPLETE: Extracted ${deadlines.length} deadlines from Calendar page`);
-  console.log('[Calendar Extractor] Full deadline array:', deadlines);
+  DEBUG && console.log(`[Calendar Extractor] ✅ PHASE 1 COMPLETE: Extracted ${deadlines.length} deadlines from Calendar page`);
+  DEBUG && console.log('[Calendar Extractor] Full deadline array:', deadlines);
   
   return deadlines;
 }
@@ -321,12 +324,12 @@ async function parseGradescopeAssignments(): Promise<SimpleDeadline[]> {
   // V2 GENERALIZATION: Path guard - only run on course dashboard pages
   const pathPattern = /\/courses\/\d+\/?$/;
   if (!pathPattern.test(window.location.pathname)) {
-    console.log('[Gradescope Extractor] Not on Gradescope course dashboard page');
+    DEBUG && console.log('[Gradescope Extractor] Not on Gradescope course dashboard page');
     return deadlines;
   }
   
-  console.log('[Gradescope Extractor] Searching for assignments...');
-  console.log('[Gradescope Extractor] Current URL:', window.location.href);
+  DEBUG && console.log('[Gradescope Extractor] Searching for assignments...');
+  DEBUG && console.log('[Gradescope Extractor] Current URL:', window.location.href);
   
   // Extract course ID from URL (e.g., /courses/1110932)
   const urlMatch = window.location.pathname.match(/\/courses\/(\d+)/);
@@ -354,7 +357,7 @@ async function parseGradescopeAssignments(): Promise<SimpleDeadline[]> {
   );
   
   if (termYear) {
-    console.log(`[Gradescope Extractor] Extracted term year: ${termYear}`);
+    DEBUG && console.log(`[Gradescope Extractor] Extracted term year: ${termYear}`);
   } else {
     console.warn('[Gradescope Extractor] Could not extract term year from page, falling back to heuristic');
   }
@@ -383,12 +386,12 @@ async function parseGradescopeAssignments(): Promise<SimpleDeadline[]> {
   
   // Normalize course name for consistency with eDimension
   const course = normalizeCourse(courseName);
-  console.log('[Gradescope Extractor] Course:', course, '(ID:', courseId, ', Raw:', courseName, ', Code:', courseCode, ')');
+  DEBUG && console.log('[Gradescope Extractor] Course:', course, '(ID:', courseId, ', Raw:', courseName, ', Code:', courseCode, ')');
   
   // Find assignment table
   const table = document.querySelector<HTMLTableElement>('table');
   if (!table) {
-    console.log('[Gradescope Extractor] No assignment table found');
+    DEBUG && console.log('[Gradescope Extractor] No assignment table found');
     return deadlines;
   }
   
@@ -403,7 +406,7 @@ async function parseGradescopeAssignments(): Promise<SimpleDeadline[]> {
       // Match "Due", "Due Date", "Due (+08)" etc.
       if (headerText.includes('due') && !headerText.includes('late')) {
         dueColumnIndex = i;
-        console.log(`[Gradescope Extractor] Found "Due" column at index ${i} (header: "${headers[i].textContent?.trim()}")`);
+        DEBUG && console.log(`[Gradescope Extractor] Found "Due" column at index ${i} (header: "${headers[i].textContent?.trim()}")`);
         break;
       }
     }
@@ -418,10 +421,10 @@ async function parseGradescopeAssignments(): Promise<SimpleDeadline[]> {
     table.querySelectorAll<HTMLTableRowElement>('tbody tr')
   );
   
-  console.log(`[Gradescope Extractor] Found ${tableRows.length} table rows`);
+  DEBUG && console.log(`[Gradescope Extractor] Found ${tableRows.length} table rows`);
   
   if (tableRows.length === 0) {
-    console.log('[Gradescope Extractor] No assignment rows found');
+    DEBUG && console.log('[Gradescope Extractor] No assignment rows found');
     return deadlines;
   }
   
@@ -459,10 +462,10 @@ async function parseGradescopeAssignments(): Promise<SimpleDeadline[]> {
             
             if (!isReleasedColumn) {
               dueCell = cell;
-              console.log(`[Gradescope Extractor] Row ${index}: Found due date by pattern in cell: "${text}"`);
+              DEBUG && console.log(`[Gradescope Extractor] Row ${index}: Found due date by pattern in cell: "${text}"`);
               break;
             } else {
-              console.log(`[Gradescope Extractor] Row ${index}: Skipping Released column, continuing search...`);
+              DEBUG && console.log(`[Gradescope Extractor] Row ${index}: Skipping Released column, continuing search...`);
             }
           }
         }
@@ -485,14 +488,14 @@ async function parseGradescopeAssignments(): Promise<SimpleDeadline[]> {
       const dueTimeElem = row.querySelector<HTMLTimeElement>('time.submissionTimeChart--dueDate');
       if (dueTimeElem) {
         rawDueText = dueTimeElem.textContent?.trim() || '';
-        console.log(`[Gradescope Extractor] Row ${index}: Found due date: "${rawDueText}"`);
+        DEBUG && console.log(`[Gradescope Extractor] Row ${index}: Found due date: "${rawDueText}"`);
       }
       
       // Check for late due date
       const lateDueTimeElem = row.querySelector<HTMLTimeElement>('time.submissionTimeChart--lateDueDate');
       if (lateDueTimeElem) {
         lateDueDate = lateDueTimeElem.textContent?.trim() || '';
-        console.log(`[Gradescope Extractor] Row ${index}: Found late due date: "${lateDueDate}"`);
+        DEBUG && console.log(`[Gradescope Extractor] Row ${index}: Found late due date: "${lateDueDate}"`);
       }
       
       if (!rawDueText) {
@@ -500,7 +503,7 @@ async function parseGradescopeAssignments(): Promise<SimpleDeadline[]> {
         continue;
       }
       
-      console.log(`[Gradescope Extractor] Row ${index} RAW DATA:`, {
+      DEBUG && console.log(`[Gradescope Extractor] Row ${index} RAW DATA:`, {
         title,
         rawDueText,
         lateDueDate,
@@ -518,7 +521,7 @@ async function parseGradescopeAssignments(): Promise<SimpleDeadline[]> {
       // V2: Filter out past deadlines (only include future deadlines)
       const dueDate = new Date(parsed.due_at_iso);
       if (dueDate < now) {
-        console.log(`[Gradescope Extractor] Row ${index}: Skipping past deadline "${title}" (due: ${parsed.due_at_iso})`);
+        DEBUG && console.log(`[Gradescope Extractor] Row ${index}: Skipping past deadline "${title}" (due: ${parsed.due_at_iso})`);
         continue;
       }
       
@@ -551,7 +554,7 @@ async function parseGradescopeAssignments(): Promise<SimpleDeadline[]> {
         missing_time: parsed.missing_time
       };
       
-      console.log(`[Gradescope Extractor] Row ${index} PROCESSED:`, {
+      DEBUG && console.log(`[Gradescope Extractor] Row ${index} PROCESSED:`, {
         id: deadline.id,
         title: deadline.title,
         course: deadline.course,
@@ -566,8 +569,8 @@ async function parseGradescopeAssignments(): Promise<SimpleDeadline[]> {
     }
   }
   
-  console.log(`[Gradescope Extractor] ✅ Extracted ${deadlines.length} future deadlines from Gradescope`);
-  console.log('[Gradescope Extractor] Full deadline array:', deadlines);
+  DEBUG && console.log(`[Gradescope Extractor] ✅ Extracted ${deadlines.length} future deadlines from Gradescope`);
+  DEBUG && console.log('[Gradescope Extractor] Full deadline array:', deadlines);
   
   return deadlines;
 }
@@ -594,7 +597,7 @@ async function saveToStorage(deadlines: SimpleDeadline[]) {
         const urlMatch = deadlines[0].source_url.match(/\/courses\/(\d+)/);
         if (urlMatch) {
           newCourseId = urlMatch[1];
-          console.log(`[DC Storage] Gradescope extraction from course ${newCourseId}`);
+          DEBUG && console.log(`[DC Storage] Gradescope extraction from course ${newCourseId}`);
         }
       }
       
@@ -650,7 +653,7 @@ async function saveToStorage(deadlines: SimpleDeadline[]) {
           
           // Log migrations
           if (legacyItem.source === 'Activity' && newItem.source !== 'Activity') {
-            console.log(`[DC] Migrating Activity→${newItem.source}: "${newItem.title}" (confirmed=${newItem.confirmed})`);
+            DEBUG && console.log(`[DC] Migrating Activity→${newItem.source}: "${newItem.title}" (confirmed=${newItem.confirmed})`);
           }
         }
         
@@ -661,7 +664,7 @@ async function saveToStorage(deadlines: SimpleDeadline[]) {
       
       const removedCount = existing.length - existingNonActivity.length;
       if (removedCount > 0) {
-        console.log(`[DC] Storage migration: Removed ${removedCount} old Activity entries (confirmations preserved)`);
+        DEBUG && console.log(`[DC] Storage migration: Removed ${removedCount} old Activity entries (confirmations preserved)`);
       }
       
       // Count by source for logging
@@ -670,7 +673,7 @@ async function saveToStorage(deadlines: SimpleDeadline[]) {
         sourceCounts[d.source] = (sourceCounts[d.source] || 0) + 1;
       });
       
-      console.log(`[DC] ✅ Saved ${merged.length} total deadlines:`, sourceCounts);
+      DEBUG && console.log(`[DC] ✅ Saved ${merged.length} total deadlines:`, sourceCounts);
       
       chrome.storage.local.set({ deadlines: merged }, () => {
         if (chrome.runtime.lastError) {
@@ -685,7 +688,7 @@ async function saveToStorage(deadlines: SimpleDeadline[]) {
 
 // Main extraction function
 async function extractAndSave() {
-  console.log('[DC] Starting extraction...');
+  DEBUG && console.log('[DC] Starting extraction...');
   const startTime = performance.now();
   const url = window.location.href;
   
@@ -700,16 +703,16 @@ async function extractAndSave() {
       // V2: Gradescope assignments extraction
       deadlines = await parseGradescopeAssignments();
     } else {
-      console.log('[DC] Not on a supported page (eDimension or Gradescope)');
+      DEBUG && console.log('[DC] Not on a supported page (eDimension or Gradescope)');
       return;
     }
     
     if (deadlines.length > 0) {
       await saveToStorage(deadlines);
       const duration = Math.round(performance.now() - startTime);
-      console.log(`[DC] ✅ Extraction complete in ${duration}ms`);
+      DEBUG && console.log(`[DC] ✅ Extraction complete in ${duration}ms`);
     } else {
-      console.log('[DC] No deadlines found on this page');
+      DEBUG && console.log('[DC] No deadlines found on this page');
     }
   } catch (error) {
     console.error('[DC] Extraction failed:', error);
@@ -729,7 +732,7 @@ if (document.readyState === 'loading') {
 let lastUrl = window.location.href;
 setInterval(() => {
   if (window.location.href !== lastUrl) {
-    console.log('[DC] URL changed, re-extracting...');
+    DEBUG && console.log('[DC] URL changed, re-extracting...');
     lastUrl = window.location.href;
     setTimeout(extractAndSave, 1000);
   }

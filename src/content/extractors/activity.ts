@@ -3,12 +3,14 @@ import { extractDeadlineFromText } from '../../parsing/dateParser';
 import { generateId, normalizeTitle } from '../../parsing/hash';
 import selectors from '../../config/selectors.json';
 
+const DEBUG = false; // Set to true for development logging
+
 export async function extractFromActivity(): Promise<DeadlineItem[]> {
   const items: DeadlineItem[] = [];
   const config = selectors.activity;
 
   const streamItems = document.querySelectorAll(config.items);
-  console.log(`[Activity Extractor] Found ${streamItems.length} stream items`);
+  DEBUG && console.log(`[Activity Extractor] Found ${streamItems.length} stream items`);
   
   for (const element of Array.from(streamItems)) {
     try {
@@ -17,7 +19,7 @@ export async function extractFromActivity(): Promise<DeadlineItem[]> {
       const dateBdiElements = element.querySelectorAll(config.dueDateBdi);
       
       if (!courseEl || !titleEl) {
-        console.log('[Activity Extractor] Skipping item - missing course or title');
+        DEBUG && console.log('[Activity Extractor] Skipping item - missing course or title');
         continue;
       }
       
@@ -36,15 +38,15 @@ export async function extractFromActivity(): Promise<DeadlineItem[]> {
       }
       
       if (!dateText) {
-        console.log('[Activity Extractor] Skipping item - no date found:', title);
+        DEBUG && console.log('[Activity Extractor] Skipping item - no date found:', title);
         continue;
       }
       
-      console.log(`[Activity Extractor] Processing: "${title}" with date "${dateText}"`);
+      DEBUG && console.log(`[Activity Extractor] Processing: "${title}" with date "${dateText}"`);
       
       const parsed = extractDeadlineFromText(dateText);
       if (!parsed) {
-        console.log('[Activity Extractor] Failed to parse date:', dateText);
+        DEBUG && console.log('[Activity Extractor] Failed to parse date:', dateText);
         continue;
       }
       
@@ -71,13 +73,13 @@ export async function extractFromActivity(): Promise<DeadlineItem[]> {
         missing_time: parsed.missing_time
       });
       
-      console.log(`[Activity Extractor] Added: "${title}" due ${parsed.due_at_iso}`);
+      DEBUG && console.log(`[Activity Extractor] Added: "${title}" due ${parsed.due_at_iso}`);
     } catch (error) {
       console.error('[Activity Extractor] Error extracting item:', error);
     }
   }
   
-  console.log(`[Activity Extractor] Extracted ${items.length} deadlines from Activity page`);
+  DEBUG && console.log(`[Activity Extractor] Extracted ${items.length} deadlines from Activity page`);
   return items;
 }
 

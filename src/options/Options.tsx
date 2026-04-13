@@ -101,29 +101,6 @@ function OptionsPage() {
       </div>
 
       <div className="section">
-        <h2>Auto-Confirm Threshold (Future)</h2>
-        <p className="description">
-          Automatically confirm deadlines above this confidence score (0 = disabled).
-          This feature is experimental and disabled by default.
-        </p>
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value={settings.auto_confirm_threshold * 100}
-          onChange={(e) => setSettings({
-            ...settings,
-            auto_confirm_threshold: parseInt(e.target.value) / 100
-          })}
-          className="threshold-slider"
-          disabled
-        />
-        <div className="threshold-value">
-          {settings.auto_confirm_threshold === 0 ? 'Disabled' : `${(settings.auto_confirm_threshold * 100).toFixed(0)}%`}
-        </div>
-      </div>
-
-      <div className="section">
         <h2>Data Management</h2>
         <p className="description">Clear all stored deadlines and reset the extension.</p>
         <button onClick={handleClearData} className="btn-danger">
@@ -139,7 +116,7 @@ function OptionsPage() {
 
       <div className="footer">
         <p><strong>Privacy Note:</strong> All data is stored locally in your browser. No information is sent to external servers.</p>
-        <p><strong>To change the eDimension domain:</strong> Edit the <code>host_permissions</code> in <code>manifest.json</code>.</p>
+        <p className="attribution">Built by <a href="https://github.com/AbhishekVulla/sutd-deadline-center" target="_blank" rel="noopener noreferrer">Abhishek Vulla</a></p>
       </div>
     </div>
   );

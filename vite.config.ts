@@ -10,9 +10,9 @@ export default defineConfig({
     viteStaticCopy({
       targets: [
         { src: 'manifest.json', dest: '.' },
-        { src: 'public/icon16.svg', dest: '.' },
-        { src: 'public/icon48.svg', dest: '.' },
-        { src: 'public/icon128.svg', dest: '.' }
+        { src: 'public/icon16.jpg', dest: '.' },
+        { src: 'public/icon48.jpg', dest: '.' },
+        { src: 'public/icon128.jpg', dest: '.' }
       ]
     }),
     {

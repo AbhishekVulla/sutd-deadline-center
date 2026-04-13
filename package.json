@@ -1,6 +1,6 @@
 {
   "name": "deadline-center-edimension-companion",
-  "version": "1.0.0",
+  "version": "1.2.1",
   "description": "Chrome/Edge extension to extract and organize deadlines from eDimension",
   "type": "module",
   "scripts": {

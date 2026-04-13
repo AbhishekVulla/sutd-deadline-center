@@ -23,36 +23,43 @@ body {
 }
 
 .app {
-  padding: 16px;
+  padding: 12px;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
+/* --- Header --- */
+
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #333;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #333;
 }
 
 .header h1 {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 600;
   color: #fff;
+}
+
+.header-actions {
+  display: flex;
+  gap: 6px;
 }
 
 .export-btn {
   background: #10b981;
   color: white;
   border: none;
-  padding: 6px 12px;
+  padding: 4px 10px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
 }
 
@@ -70,10 +77,10 @@ body {
   background: transparent;
   color: #9ca3af;
   border: 1px solid #4b5563;
-  padding: 6px 12px;
+  padding: 4px 10px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .add-btn:hover {
@@ -87,33 +94,23 @@ body {
   color: #999;
 }
 
+/* --- Filters --- */
+
 .filters {
   display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.filter-group {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.filter-group label {
-  font-size: 12px;
-  color: #999;
-  font-weight: 500;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 .course-select,
 .search-input {
-  padding: 8px;
+  flex: 1;
+  padding: 6px 8px;
   border: 1px solid #444;
   border-radius: 4px;
   background: #2a2a2a;
   color: #e0e0e0;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .course-select:focus,
@@ -122,6 +119,8 @@ body {
   border-color: #2563eb;
 }
 
+/* --- Deadline List --- */
+
 .deadline-list {
   flex: 1;
   overflow-y: auto;
@@ -129,16 +128,20 @@ body {
 }
 
 .time-group {
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .group-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: #999;
+  color: #888;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+}
+
+.time-group + .time-group .group-title {
+  margin-top: 16px;
 }
 
 .group-title-collapsible {
@@ -150,7 +153,7 @@ body {
 }
 
 .group-title-collapsible:hover {
-  color: #bbb;
+  color: #888;
 }
 
 .collapse-chevron {
@@ -162,130 +165,145 @@ body {
   transform: rotate(90deg);
 }
 
-.item-card {
-  background: #2a2a2a;
-  border: 1px solid #3a3a3a;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 8px;
+/* --- Compact Deadline Row --- */
+
+.deadline-row {
+  padding: 8px 10px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.15s ease;
+  border-bottom: 1px solid #252525;
+  position: relative;
 }
 
-.item-card:hover {
-  border-color: #2563eb;
-  transform: translateY(-1px);
+.deadline-row:hover {
+  background: #2a2a2a;
 }
 
+.deadline-row.expanded {
+  background: #242424;
+}
 
-.item-header {
+/* Line 1: Course + Countdown */
+.row-line-1 {
   display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
+  align-items: center;
+  justify-content: space-between;
+  line-height: 16px;
 }
 
-.course-badge,
-.type-badge {
-  padding: 2px 8px;
-  border-radius: 4px;
+.row-course {
+  font-size: 12px;
+  color: #6b7280;
+  max-width: 350px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row-countdown {
   font-size: 11px;
-  font-weight: 600;
+  color: #6b7280;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 8px;
 }
 
-.course-badge {
-  background: #374151;
-  color: #9ca3af;
+/* Line 2: Title + Date */
+.row-line-2 {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  line-height: 20px;
+  margin-top: 2px;
 }
 
-.type-badge {
-  background: #1e40af;
-  color: #93c5fd;
-}
-
-.item-title {
+.row-title {
   font-size: 14px;
   font-weight: 500;
-  margin-bottom: 8px;
-  color: #fff;
+  color: #e0e0e0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
-.item-meta {
+.row-separator {
   font-size: 12px;
-  color: #9ca3af;
-  margin-bottom: 8px;
+  color: #4b5563;
+  margin: 0 5px;
+  flex-shrink: 0;
 }
 
-.item-chips {
+.row-date {
+  font-size: 12px;
+  color: #6b7280;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Expandable action bar */
+.row-actions-wrapper {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.15s ease-out;
+}
+
+.deadline-row.expanded .row-actions-wrapper {
+  max-height: 40px;
+}
+
+.row-actions {
   display: flex;
+  align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
+  padding-top: 6px;
+  margin-top: 4px;
+  border-top: 1px solid #2a2a2a;
 }
 
-.chip {
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.chip-updated {
-  background: #f59e0b;
-  color: #000;
-}
-
-.chip-warning {
-  background: #dc2626;
-  color: #fff;
-}
-
-.chip-source {
-  background: #6366f1;
-  color: #fff;
-}
-
-.chip-low-confidence {
-  background: #ef4444;
-  color: #fff;
-}
-
-
-.item-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.btn-link,
-.btn-download {
-  background: none;
-  border: 1px solid #444;
-  color: #9ca3af;
-  padding: 4px 8px;
-  border-radius: 4px;
+.row-action-btn {
   font-size: 11px;
+  color: #9ca3af;
+  border: 1px solid #3a3a3a;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: transparent;
   cursor: pointer;
+  transition: all 0.1s ease;
 }
 
-.btn-link:hover,
-.btn-download:hover {
+.row-action-btn:hover {
   border-color: #2563eb;
-  color: #2563eb;
+  color: #60a5fa;
 }
+
+/* --- Empty State --- */
 
 .empty-state {
   text-align: center;
   padding: 40px 20px;
-  color: #666;
+  color: #9ca3af;
+}
+
+.empty-state h3 {
+  color: #e0e0e0;
 }
 
 .empty-state p {
   margin-bottom: 8px;
 }
 
-.empty-state .hint {
-  font-size: 12px;
-  color: #999;
+.empty-state a {
+  color: #60a5fa;
+  text-decoration: underline;
 }
+
+.empty-state a:hover {
+  color: #93bbfc;
+}
+
+/* --- Modal --- */
 
 .modal-overlay {
   position: fixed;
@@ -346,6 +364,10 @@ body {
 .form-select:focus {
   outline: none;
   border-color: #2563eb;
+}
+
+.form-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
 }
 
 .form-row {
@@ -415,6 +437,8 @@ body {
 .btn-primary:hover {
   background: #1d4ed8;
 }
+
+/* --- Scrollbar --- */
 
 ::-webkit-scrollbar {
   width: 8px;

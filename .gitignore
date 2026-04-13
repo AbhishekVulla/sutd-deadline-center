@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.claude/
+*.env
+.DS_Store
+CLAUDE.md
+dist.zip
