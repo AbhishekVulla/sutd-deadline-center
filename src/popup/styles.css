@@ -53,7 +53,7 @@ body {
 }
 
 .export-btn {
-  background: #10b981;
+  background: #3b82f6;
   color: white;
   border: none;
   padding: 4px 10px;
@@ -64,7 +64,7 @@ body {
 }
 
 .export-btn:hover {
-  background: #059669;
+  background: #2563eb;
 }
 
 .export-btn:disabled {
@@ -319,9 +319,9 @@ body {
 }
 
 .modal-content {
-  background: #2a2a2a;
-  border: 1px solid #444;
-  border-radius: 8px;
+  background: #171717;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
   padding: 24px;
   width: 500px;
   max-width: calc(100% - 32px);
@@ -353,9 +353,9 @@ body {
 .form-select {
   width: 100%;
   padding: 8px;
-  border: 1px solid #444;
-  border-radius: 4px;
-  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  background: #1f1f1f;
   color: #e0e0e0;
   font-size: 14px;
 }
@@ -363,7 +363,7 @@ body {
 .form-input:focus,
 .form-select:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: #3b82f6;
 }
 
 .form-input::-webkit-calendar-picker-indicator {
@@ -390,11 +390,14 @@ body {
 }
 
 .form-info {
-  background: #1a1a1a;
-  padding: 12px;
-  border-radius: 4px;
+  display: inline-block;
+  background: #1f1f1f;
+  padding: 4px 12px;
+  border-radius: 12px;
   margin-bottom: 16px;
   font-size: 12px;
+  color: #9ca3af;
+  align-self: flex-start;
 }
 
 .form-info p {
@@ -414,28 +417,30 @@ body {
 .btn {
   padding: 8px 16px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
 }
 
 .btn-cancel {
-  background: #374151;
+  background: transparent;
   color: #9ca3af;
+  border: 1px solid #4b5563;
 }
 
 .btn-cancel:hover {
-  background: #4b5563;
+  border-color: #6b7280;
+  color: #d1d5db;
 }
 
 .btn-primary {
-  background: #2563eb;
+  background: #3b82f6;
   color: white;
 }
 
 .btn-primary:hover {
-  background: #1d4ed8;
+  background: #2563eb;
 }
 
 /* --- Scrollbar --- */

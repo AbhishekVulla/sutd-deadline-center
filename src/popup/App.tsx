@@ -245,6 +245,7 @@ function App() {
             loadData();
           }}
           settings={settings!}
+          existingCourses={courses}
         />
       )}
     </div>

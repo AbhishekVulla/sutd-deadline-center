@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.3.0 (May 2026)
+- When adding your own deadline, course is now a dropdown of existing courses (no more accidental duplicates from typos)
+- Removed the "Type" field from the Add/Edit modal (wasn't used anywhere)
+- Modal redesign: consistent blue buttons, outlined Cancel, darker panel
+
 ## v1.2.1 (March 2026)
 - Fix parsing of revised deadlines ("Due date 2:", "Due date 3:", etc.) that eDimension uses when professors extend due dates
 

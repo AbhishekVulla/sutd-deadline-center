@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DeadlineItem, DeadlineType, Settings } from '../../types';
+import { DeadlineItem, Settings } from '../../types';
 import { getDeadlines, saveDeadlines } from '../../storage';
 import { generateId } from '../../parsing/hash';
 import dayjs from 'dayjs';
@@ -9,40 +9,52 @@ import timezone from 'dayjs/plugin/timezone';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
+const NEW_COURSE_SENTINEL = '__NEW_COURSE__';
+
 interface Props {
   item: DeadlineItem;
   onClose: () => void;
   onSave: () => void;
   settings: Settings;
+  existingCourses: string[];
 }
 
-function EditModal({ item, onClose, onSave, settings }: Props) {
+function EditModal({ item, onClose, onSave, settings, existingCourses }: Props) {
   const isNewItem = !item.id;
   const dueDate = isNewItem ? dayjs() : dayjs(item.due_at_iso);
-  
+
   const [title, setTitle] = useState(item.title || '');
   const [course, setCourse] = useState(item.course || '');
-  const [type, setType] = useState<DeadlineType>(item.type || 'HW');
+  const [newCourseMode, setNewCourseMode] = useState(false);
   const [date, setDate] = useState(dueDate.format('YYYY-MM-DD'));
   const [time, setTime] = useState(isNewItem ? '23:59' : dueDate.format('HH:mm'));
+
+  function handleCourseSelectChange(value: string) {
+    if (value === NEW_COURSE_SENTINEL) {
+      setNewCourseMode(true);
+      setCourse('');
+    } else {
+      setCourse(value);
+    }
+  }
 
   async function handleSave() {
     if (!title.trim() || !course.trim()) {
       alert('Please fill in both title and course');
       return;
     }
-    
+
     try {
       const newDueAt = dayjs.tz(`${date} ${time}`, settings.timezone).toISOString();
       const deadlines = await getDeadlines();
-      
+
       if (isNewItem) {
         const id = await generateId(course, title, newDueAt, 'manual');
         const newDeadline: DeadlineItem = {
           id,
           course,
           title,
-          type,
+          type: 'Other',
           due_at_iso: newDueAt,
           source_url: '',
           raw_text: `Manually added: ${date} ${time}`,
@@ -61,7 +73,6 @@ function EditModal({ item, onClose, onSave, settings }: Props) {
               ...d,
               title,
               course,
-              type,
               due_at_iso: newDueAt,
               missing_time: false
             };
@@ -70,7 +81,7 @@ function EditModal({ item, onClose, onSave, settings }: Props) {
         });
         await saveDeadlines(updatedDeadlines);
       }
-      
+
       onSave();
     } catch (error) {
       console.error('Failed to save deadline:', error);
@@ -78,23 +89,40 @@ function EditModal({ item, onClose, onSave, settings }: Props) {
     }
   }
 
+  const showCourseTextInput = !isNewItem || newCourseMode;
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <h2>{isNewItem ? 'Add Deadline' : 'Edit Deadline'}</h2>
-        
+
         <div className="form-group">
           <label>Course:</label>
-          <input
-            type="text"
-            value={course}
-            onChange={(e) => setCourse(e.target.value)}
-            className="form-input"
-            placeholder="e.g., 10.015 : Physical World"
-            disabled={!isNewItem}
-          />
+          {showCourseTextInput ? (
+            <input
+              type="text"
+              value={course}
+              onChange={(e) => setCourse(e.target.value)}
+              className="form-input"
+              placeholder="e.g., 10.015 – Physical World"
+              disabled={!isNewItem}
+              autoFocus={isNewItem && newCourseMode}
+            />
+          ) : (
+            <select
+              value={course}
+              onChange={(e) => handleCourseSelectChange(e.target.value)}
+              className="form-select"
+            >
+              <option value="">Select a course…</option>
+              {existingCourses.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+              <option value={NEW_COURSE_SENTINEL}>+ New course</option>
+            </select>
+          )}
         </div>
-        
+
         <div className="form-group">
           <label>Title:</label>
           <input
@@ -104,21 +132,6 @@ function EditModal({ item, onClose, onSave, settings }: Props) {
             className="form-input"
             placeholder="e.g., Problem Set 3"
           />
-        </div>
-
-        <div className="form-group">
-          <label>Type:</label>
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value as DeadlineType)}
-            className="form-select"
-          >
-            <option value="HW">Homework</option>
-            <option value="Quiz">Quiz</option>
-            <option value="Project">Project</option>
-            <option value="Exam">Exam</option>
-            <option value="Other">Other</option>
-          </select>
         </div>
 
         <div className="form-row">
@@ -145,7 +158,7 @@ function EditModal({ item, onClose, onSave, settings }: Props) {
 
         {!isNewItem && (
           <div className="form-info">
-            <p><strong>Source:</strong> {item.source}</p>
+            <span><strong>Source:</strong> {item.source}</span>
           </div>
         )}
 

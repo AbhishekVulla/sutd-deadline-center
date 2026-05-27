@@ -1,21 +1,14 @@
 # SUTD Deadline Center
 
-> Chrome extension for SUTD students that pulls deadlines from **eDimension** and **Gradescope** into one clean dashboard with calendar export.
+> Chrome extension for SUTD students that pulls deadlines from **eDimension** and **Gradescope** into one popup, with one-click export to Google Calendar.
 
 **Created by [Abhishek Vulla](https://github.com/AbhishekVulla)** · SUTD Class of 2029 · Building 0 Initiative
 
 [![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-Published-green?logo=googlechrome)](https://chromewebstore.google.com/detail/sutd-deadline-center/didnpjogdamalaggfnidojaoconlobpk)
+[![Users](https://img.shields.io/chrome-web-store/users/didnpjogdamalaggfnidojaoconlobpk)](https://chromewebstore.google.com/detail/sutd-deadline-center/didnpjogdamalaggfnidojaoconlobpk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ---
-
-## The Problem
-
-Deadlines are scattered across eDimension, Gradescope, and random chats. Students keep checking multiple pages and still miss things.
-
-## The Solution
-
-SUTD Deadline Center automatically extracts all your deadlines and displays them in one unified dashboard inside your browser.
 
 ![eDimension Dashboard](screenshots/main-view.png)
 
