@@ -1,7 +1,8 @@
 node_modules/
 dist/
+dist-firefox/
 .claude/
 *.env
 .DS_Store
 CLAUDE.md
-dist.zip
+*.zip

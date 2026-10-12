@@ -47,13 +47,11 @@ function formatCountdown(isoString: string): string {
   const diffHours = diffMs / (1000 * 60 * 60);
   const diffDays = diffMs / (1000 * 60 * 60 * 24);
 
-  // Check if due today
   const isToday = due.toDateString() === now.toDateString();
   if (isToday) {
     return 'Today';
   }
 
-  // Check if due tomorrow
   const tomorrow = new Date(now);
   tomorrow.setDate(now.getDate() + 1);
   if (due.toDateString() === tomorrow.toDateString()) {
