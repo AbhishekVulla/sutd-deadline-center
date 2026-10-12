@@ -26,7 +26,7 @@ const manifest = JSON.parse(readFileSync(`${OUT}/manifest.json`, 'utf8'));
 manifest.browser_specific_settings = {
   gecko: {
     // Firefox matches updates to installed copies by this ID, so it must never change once published.
-    id: 'sutd-deadline-center@abhishekvulla',
+    id: 'sutd-deadline-center@abhishekvulla.github.io',
     // data_collection_permissions only exists from Firefox 140.
     strict_min_version: '140.0',
     data_collection_permissions: { required: ['none'] },
