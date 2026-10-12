@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.3.1 (September 2026)
+- Fix: search box no longer pushed off-screen when a course has a very long name
+
 ## v1.3.0 (May 2026)
 - When adding your own deadline, course is now a dropdown of existing courses (no more accidental duplicates from typos)
 - Removed the "Type" field from the Add/Edit modal (wasn't used anywhere)
