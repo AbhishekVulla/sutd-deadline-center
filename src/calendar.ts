@@ -17,7 +17,6 @@ export function generateICS(deadline: DeadlineItem, settings: Settings): string 
     alarms.push(createAlarm(2 * 60));
   }
   
-  // Format clean description with structured info
   const formattedDate = dueDate.toLocaleString('en-SG', {
     timeZone: settings.timezone,
     year: 'numeric',

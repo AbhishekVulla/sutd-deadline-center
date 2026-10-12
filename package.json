@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite build --watch --mode development",
     "build": "tsc && vite build && esbuild src/content/content-unified.ts --bundle --format=iife --outfile=dist/content.js --target=es2020 && node -e \"const fs = require('fs'); const content = fs.readFileSync('dist/content.js', 'utf8'); const hasImport = /^\\s*(import|export)\\s/m.test(content); if (hasImport) { console.error('ERROR: content.js still contains import/export statements!'); process.exit(1); } else { console.log('✓ content.js is a valid IIFE with no imports'); }\"",
+    "build:firefox": "npm run build && node scripts/build-firefox.mjs",
     "test": "vitest",
     "test:run": "vitest run"
   },

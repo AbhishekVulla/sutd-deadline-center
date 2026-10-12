@@ -16,7 +16,7 @@ export interface ParsedDate {
 }
 
 const DATE_PATTERNS = [
-  // V2: "Nov 17 at 8:00PM" - Gradescope format (month day at time)
+  // "Nov 17 at 8:00PM" (Gradescope)
   {
     regex: /(\w{3,9})\s+(\d{1,2})\s+at\s+(\d{1,2}):(\d{2})\s*(AM|PM)/i,
     confidence: 0.95,

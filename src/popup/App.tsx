@@ -11,19 +11,18 @@ type TimeGroup = 'thisWeek' | 'nextWeek' | 'later' | 'overdue';
 
 const OVERDUE_EXPIRY_DAYS = 3;
 
-// PHASE 2: Display-only course name cleaner (does NOT affect grouping/dedup logic)
+// Display only. Grouping and dedup still use the stored course name.
 function getDisplayCourseName(rawName: string, courseCode?: string | null): string {
   let name = rawName.trim();
   
-  // If courseCode exists and appears in the raw name, use it as anchor point
-  // This strips "2530-XXXXXX-" prefixes automatically
+  // Start from the course code, which drops prefixes like "2530-XXXXXX-".
   if (courseCode && name.includes(courseCode)) {
     const idx = name.indexOf(courseCode);
     if (idx >= 0) {
       name = name.slice(idx).trim();
     }
   } else {
-    // For courses without XX.XXX code (e.g., EWET), drop everything before the last "–"
+    // No course code (e.g. EWET): keep what comes after the last "–".
     const lastDashIdx = name.lastIndexOf('–');
     if (lastDashIdx !== -1) {
       const prefix = name.slice(0, lastDashIdx).trim();
@@ -37,10 +36,8 @@ function getDisplayCourseName(rawName: string, courseCode?: string | null): stri
 }
 
 /**
- * SINGLE SOURCE OF TRUTH: Determines if a deadline is "visible"
- * A deadline is visible if:
- * 1. It's not overdue, OR
- * 2. It's overdue but within the OVERDUE_EXPIRY_DAYS threshold
+ * The one visibility rule, shared by the list, the export count and the course dropdown:
+ * upcoming, or overdue by no more than OVERDUE_EXPIRY_DAYS.
  */
 function isDeadlineVisible(deadline: DeadlineItem): boolean {
   const now = new Date();
@@ -84,15 +81,12 @@ function App() {
     }
   }
 
-  // STEP 1: Filter to only VISIBLE deadlines (applies overdue threshold)
-  // This is the canonical list - all other filtering builds on top of this
   const baseVisibleDeadlines = useMemo(() => 
     deadlines.filter(isDeadlineVisible), 
     [deadlines]
   );
 
-  // STEP 2: Build course grouping map from VISIBLE deadlines only
-  // This ensures courses with only expired overdue items don't appear in dropdown
+  // Built from visible deadlines only, so a course whose deadlines have all expired leaves the dropdown.
   const { courseKeyToName, courseNameToKey, courseKeyToCode } = useMemo(() => {
     const keyToName = new Map<string, string>();
     const nameToKey = new Map<string, string>();
@@ -116,7 +110,6 @@ function App() {
     return { courseKeyToName: keyToName, courseNameToKey: nameToKey, courseKeyToCode: keyToCode };
   }, [baseVisibleDeadlines]);
   
-  // STEP 3: Build display course list with cleaned names
   const courses = useMemo(() => 
     Array.from(new Set(courseKeyToName.values())).sort(),
     [courseKeyToName]
@@ -132,8 +125,7 @@ function App() {
     return displayNames;
   }, [courses, courseNameToKey, courseKeyToCode]);
   
-  // STEP 4: Apply user filters (course + search) to visible deadlines
-  // This is the FINAL list used for export count, export contents, and UI
+  // Export uses this exact list, so it always matches what's on screen.
   const visibleDeadlines = useMemo(() => {
     return baseVisibleDeadlines.filter(item => {
       if (selectedCourse !== 'all') {
@@ -151,7 +143,6 @@ function App() {
     });
   }, [baseVisibleDeadlines, selectedCourse, searchQuery, courseNameToKey]);
 
-  // STEP 5: Group visible deadlines by time for UI rendering
   const groupedDeadlines = useMemo(() => 
     groupByTime(visibleDeadlines),
     [visibleDeadlines]
@@ -266,8 +257,7 @@ function groupByTime(deadlines: DeadlineItem[]): Record<TimeGroup, DeadlineItem[
     later: []
   };
 
-  // NOTE: Input deadlines are already filtered by isDeadlineVisible()
-  // so we don't need to re-filter overdue items here
+  // Input is already filtered by isDeadlineVisible().
   for (const deadline of deadlines) {
     const dueDate = new Date(deadline.due_at_iso);
 
